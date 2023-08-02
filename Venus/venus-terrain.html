@@ -1,0 +1,336 @@
+<html>
+   <head>
+      <title>Venus Surface and elevation</title>
+      <style type="text/css">
+         html {height: 100%}
+         body { margin: 0; overflow:hidden;font: 1.2em "Helvetica";color:#ffffff; height:100%;}
+         .donate {font: 2em "Helvetica"};
+         body * { 
+         width: 100%;
+         background:#0000;
+         color:#FFFFFF;}
+         #viewerDiv {
+         margin : auto auto;
+         height: 100%;
+         padding: 0;
+         /*margin-top: 50vh;
+         transform: translateY(-50%);*/
+         }
+         #menuDiv {z-index: 1; position: absolute; top:0px; margin-left: 0px;}
+         #header {
+         position:fixed;
+         right:0px;
+         top:0px;
+         height:30px;
+         text-align:right;
+         }
+         #header a:visited {
+         color: white;
+         }
+         #header a:link {
+         color: grey;
+         }
+         #footer {
+         position:fixed;
+         right:0px;
+         bottom:0px;
+         height:1.5em;
+         text-align:center;
+         }
+         #footer a:visited {
+         color: white;
+         }
+         #footer a:link {
+         color: grey;
+         }
+         .modal {
+         display: none; 
+         position: fixed; 
+         z-index: 1; 
+         padding-top: 100px; 
+         left: 0;
+         top: 0;
+         width: 100%;
+         height: 100%; 
+         overflow: auto; 
+         background-color: rgb(0,0,0); 
+         background-color: rgba(0,0,0,0.9); 
+         top: 50%;
+         transform: translateY(-50%);
+         }
+         /* Modal Content */
+         .modal-content {
+         background-color: #fefefe;
+         margin: auto;
+         padding: 20px;
+         border: 1px solid #888;
+         border-radius: 2rem;
+         width: 60%;
+         }
+         .close {
+         color: #aaaaaa;
+         float: right;
+         text-align:right;
+         font-size: 2em;
+         font-weight: bold;
+         }
+         .close:hover,
+         .close:focus {
+         color: #000;
+         text-decoration: none;
+         cursor: pointer;
+         }
+         .donate {
+         margin:auto;
+         border-radius:1rem;
+         background: #00684d;
+         background: -webkit-linear-gradient(top, transparent 0%, rgba(0, 0, 0, 0.4) 100%), -webkit-linear-gradient(left, #00b486 0%, #00684d 50%, #00b486 100%);
+         background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.4) 100%), linear-gradient(to right, #00b486 0%, #00684d 50%, #00b486 100%);
+         background-position: 0 0;
+         background-size: 200% 100%;
+         color: #fff;
+         padding: 15px 65px 15px 15px;
+         text-shadow: 1px 1px 5px #666;
+         -webkit-transition: all 800ms;
+         transition: all 800ms;
+         }
+         .atxt {
+         display: inline-block;
+         margin: 20px;
+         position: relative;
+         text-decoration: none;
+         }
+         .donate:after {
+         border-left: 1px solid #ffffff;
+         color: #003527;
+         content: "   🤍";
+         font: 1.2em;
+         padding: 0.2em 0em;
+         padding-left: 0.1em;
+         position: absolute;
+         right: 0.1em;
+         top: 7px;
+         -webkit-transition: all 600ms 200ms;
+         transition: all 600ms 200ms;
+         }
+         .donate:hover {
+         background-position: -100% 0;
+         }
+         .donate:hover:after {
+         border-left: 1px solid #008260;
+         color: #fff;
+         text-shadow: 0 0 10px #000;
+         }
+         .center {
+         position: absolute;
+         left: 50%;
+         top: 50%;
+         transform: translate(-50%, -50%);
+         }
+      </style>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <script src="js/dat.gui.min.js"></script>
+      <script id="fragmentShader" type="x-shader/x-vertex"> 
+         varying vec3 vNormal;
+         void main() 
+         {
+         	float intensity = pow( 0.7 - dot( vNormal, vec3( 0.0, 0.0, 1.0 ) ), 4.0 ); 
+         	gl_FragColor = vec4( 1.0, 1.0, 1.0, 1.0 ) * intensity;
+         }
+      </script>
+   </head>
+   <body>
+      <div id="viewerDiv"></div>
+      <div id="header">
+         <a href="http://www.itowns-project.org/" target="_blank" style="color:white;">iTowns</a>
+      </div>
+      <div id="footer">© <a href="https://github.com/Lombard-Web-Services" alt="Lombard-Web-Services" target="_blank">LombardWeb</a>, <a href="http://www.ign.fr" target="_blank">IGN</a>, dataset : <a href="https://www.nasa.gov/feature/goddard/2021/parker-solar-probe-offers-a-stunning-view-of-venus" target="_blank">Parker Solar Probe, Magellan Team/JPL/USGS</a> model (<a href="http://www.cnes.fr" target="_blank">CNES</a>/<a href="http://grgs.obs-mip.fr/" target="_blank">GRGS</a> and <a href="http://www.gfz-potsdam.de/" target="_blank">GFZ</a>)</div>
+      <script src="js/itowns2.js"> </script>
+      <script type="text/javascript">
+         var initCenter = { longitude:2.3465, latitude: 48.88, altitude: 25000000};
+         
+         // iTowns namespace defined here
+         
+         var viewerDiv = document.getElementById("viewerDiv");
+         
+         itowns.viewer.createSceneGlobe(initCenter, viewerDiv, {atmosphere:false, elevationZooms:[4,2]}) ;
+         
+         itowns.viewer.addImageryLayer({
+         protocol:  "wmtsc",
+         id:        "GEOID",
+         zoom : { min:1, max:4 },
+         customUrl: 'venusterrain/jpg/%TILEMATRIX/localcolors2_%COL_%ROW.jpg',
+         options: { mimetype  : "image/jpg", tileMatrixSet: 'WGS84G' },
+         opacity : 1
+         });
+         itowns.viewer.addElevationLayer({
+         protocol:  "wmtsc",
+         id:        "GEOID",
+         zoom : { min:2, max:4 },
+         customUrl: 'geoid/bil/%TILEMATRIX/geoid_%COL_%ROW.bil',
+         noDataValue : -99999,
+         zFactor : 2000,
+         options: {
+              name: "ELEVATION.ELEVATIONGRIDCOVERAGE",
+              mimetype: "image/x-bil;bits=32",
+              tileMatrixSet: "WGS84G"
+          }
+         });
+         
+         itowns.viewer.update();
+
+         var text = {};
+         var gui = new dat.GUI( { autoPlace: false});
+         gui.domElement.id = 'menuDiv';
+         viewerDiv.appendChild(gui.domElement);
+         {
+         var screenshot = function() {
+         
+         var gfx = itowns.viewer.scene.gfxEngine;
+         var tilelength = 1232;
+         var fullsize = text.screenshot;
+         var tiles   = { width: Math.ceil(fullsize.width/tilelength), height: Math.ceil(fullsize.height/tilelength) };
+         var size = gfx.getRenderer().getSize();
+         
+         var canvas = document.createElement("canvas");
+         var ctx = canvas.getContext("2d");
+         canvas.width = fullsize.width;
+         canvas.height = fullsize.height;
+         console.log
+         
+         for(var i=0; i<tiles.width; ++i) for(var j=0; j<tiles.height; ++j) {
+         console.log('screenshot, tile : ',(i+j*tiles.width)+"/"+(tiles.width*tiles.height));
+         
+         var x = i*tilelength;
+         var y = j*tilelength;
+         var tilesize = { width: Math.min(fullsize.width-x,tilelength), height: Math.min(fullsize.height-y,tilelength) };
+         
+         gfx.width = tilesize.width;
+         gfx.height = tilesize.height;
+         gfx.camera.resize(tilesize.width, tilesize.height);
+         gfx.camera.camera3D.setViewOffset(fullsize.width,fullsize.height, x,y, tilesize.width,tilesize.height);
+         gfx.scene.updateCamera();
+         gfx.renderer.setSize( tilesize.width, tilesize.height );
+         gfx.update();
+         
+         ctx.drawImage(gfx.renderer.domElement, x, y);
+         }
+         
+         canvas.toBlob(function(blob) {
+         var element = document.createElement('a');
+         var child = document.body.appendChild(element);
+         element.style.display = 'none';
+         var url = window.URL.createObjectURL(blob);
+         element.setAttribute('href', url);
+         element.setAttribute('download', 'itowns-geoid.png');
+         element.click();
+         window.URL.revokeObjectURL(blob);
+         document.body.removeChild(child);
+         });
+         console.log('screenshot : done');
+         
+         gfx.width = size.width;
+         gfx.height = size.height;
+         gfx.camera.resize(size.width, size.height);
+         gfx.camera.camera3D.clearViewOffset();
+         gfx.scene.updateCamera();
+         gfx.renderer.setSize( size.width, size.height );
+         gfx.update();
+         };
+         var ss = gui.addFolder('Screenshot');
+         text.screenshot = {
+         width: itowns.viewer.scene.gfxEngine.getRenderer().getSize().width,
+         height: itowns.viewer.scene.gfxEngine.getRenderer().getSize().height,
+         screenshot: screenshot
+         };
+         
+         ss.add(text.screenshot,'screenshot');
+         ss.add(text.screenshot,'width');
+         ss.add(text.screenshot,'height');
+         
+         }
+         
+         {
+              var onchangeZFactor = function(newValue) {
+                      itowns.viewer.setZFactor("GEOID",newValue);
+              };
+              text['ZFactor'] = itowns.viewer.getZFactor("GEOID");
+              gui.add(text, 'ZFactor').min(1.0).max(20000.0).onChange(onchangeZFactor);
+          }
+         
+          var onchangeOpacity;
+          {
+         text['Opacity'] = itowns.viewer.getLayerOpacity("GEOID");
+         var controller = gui.add(text, 'Opacity').listen().min(0.0).max(1.0);
+         onchangeOpacity = function(ctrl,id) {
+                return function(newValue) {
+         var opacity = Math.max(0,Math.min(newValue, 1.0));
+         text['Opacity'] = opacity; 
+         itowns.viewer.setLayerOpacity(id, opacity);
+         ctrl.updateDisplay();
+         }
+         }(controller,"GEOID");
+         controller.onChange(onchangeOpacity);
+         };
+          
+          viewerDiv.addEventListener('globe-loaded',function(){
+              console.log("Globe Loaded");
+         gamepadloop();
+          } ,
+          false);
+          
+          window.addEventListener("gamepadconnected", function(e) { console.log("Gamepad connected", e.gamepad); });
+         window.addEventListener("gamepaddisconnected", function(e) { console.log("Gamepad gamepaddisconnected", e.gamepad); });
+         function gamepadloop()
+         {
+         window.requestAnimationFrame(gamepadloop);
+         var gamepads = navigator.getGamepads();
+         var rotspeed = 0.01;
+         var opacityspeed = 0.05;
+         var eps = 0.1;
+         var c=0;
+         for (var i = 0; i < gamepads.length; ++i)
+         {
+         var pad = gamepads[i];
+         if(pad)
+         {
+         if(Math.abs(pad.axes[0])>eps) {++c; itowns.viewer.scene.currentControls().rotateLeft(rotspeed*pad.axes[0]);}
+         if(Math.abs(pad.axes[1])>eps) {++c; itowns.viewer.scene.currentControls().rotateUp(rotspeed*pad.axes[1]);}
+         var axe2 = /*pad.axes[2]+*/pad.buttons[2].value - pad.buttons[0].value;
+         if(axe2 >  eps) {++c; itowns.viewer.scene.currentControls().dollyIn ();}
+         if(axe2 < -eps) {++c; itowns.viewer.scene.currentControls().dollyOut();}
+         var axe3 = pad.axes[3]+pad.buttons[1].value - pad.buttons[3].value;
+         if(Math.abs(axe3)>eps) { onchangeOpacity( text['Opacity'] + opacityspeed*axe3 );}
+         }
+         }
+         if(c) itowns.viewer.scene.currentControls().update();
+         }
+      </script>
+      <div id="myModal" class="modal">
+         <div class="modal-content center">
+            <span class="close">&times;</span>
+            <p style="color:black;text-align:justify;margin-top:3em;">This script is distributed in opensource, it is modifiable, shareable for free without any feedback on the one who shared this content.</p>
+            <p style="color:black;text-align:justify;">
+               You can, if you wish, make a donation to enable the sustainability of lombardweb's opensource projects. Developing is a job that requires personal investment in terms of knowledge, time and resources. You can support the opensource sharing process by donating the amount you want. All contributions are welcome and will be respected on an equal basis.
+            </p>
+            <p style="color:black;text-align:left;">THANK YOU</p>
+            <div style="text-align:center;margin:auto;top:2em;"><a href="https://paypal.me/LombardWeb" class="donate atxt" target="_blank">Donate</a></div>
+         </div>
+      </div>
+      <script>
+         var modal = document.getElementById("myModal");
+         var span = document.getElementsByClassName("close")[0];
+         document.onload =   modal.style.display = "block";
+         span.onclick = function() {
+           modal.style.display = "none";
+         }
+         
+         window.onclick = function(event) {
+           if (event.target == modal) {
+             modal.style.display = "none";
+           }
+         }
+      </script>
+   </body>
+</html>
